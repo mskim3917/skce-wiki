@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKCE - CE위키</title>
+    <style>
+      /* 1. 디자인 변수 및 기본 스타일 */
+      :root {
+      --namu-teal: #00a495;
+      --sk-red: #e61919;
+      --sk-orange: #f27221;
+      --link-blue: #0275d8;
+      --border-gray: #ccc;
+      --line-light: #e5e5e5;
+      }
+      body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; line-height: 1.7; color: #373a3c; background-color: #fff; }
+      a { color: var(--link-blue); text-decoration: none; cursor: pointer; }
+      a:hover { text-decoration: underline; }
+      /* 2. 상단 네비게이션 바 */
+      .navbar { background-color: var(--namu-teal); color: white; display: flex; align-items: center; padding: 0 20px; height: 45px; position: sticky; top: 0; z-index: 1000; justify-content: space-between; }
+      .nav-left { display: flex; align-items: center; gap: 15px; }
+      .nav-brand { font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+      .nav-menu { display: flex; gap: 15px; font-size: 0.9rem; cursor: pointer; }
+      .search-container { background: white; border-radius: 4px; display: flex; align-items: center; padding: 2px 10px; width: 250px; }
+      .search-input { border: none; outline: none; width: 100%; font-size: 0.85rem; padding: 4px; }
+      .search-icon { color: #555; font-size: 0.9rem; cursor: pointer; }
+      /* 3. 문서 헤더 및 분류 박스 (첨부해주신 이미지 완벽 반영) */
+      .container { max-width: 1200px; margin: 0 auto; padding: 20px 30px; position: relative; }
+      .doc-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border-gray); padding-bottom: 10px; margin-bottom: 20px; }
+      .doc-title { font-size: 2.5rem; margin: 0; font-weight: bold; color: #333; }
+      .header-btns { display: flex; gap: 5px; }
+      .btn-wiki { background: #fdfdfd; border: 1px solid #bbb; padding: 4px 12px; font-size: 0.85rem; cursor: pointer; border-radius: 3px; color: #333; }
+      .btn-wiki:hover { background: #eee; }
+      /* 첨부 이미지(image_bf41de.png) 디자인 적용 */
+      .category-box { border: 1px solid #ddd; padding: 12px 15px; margin-bottom: 25px; font-size: 0.9rem; background: #fafafa; color: #333; }
+      /* 4. 인포박스 (너비 최적화 및 주황색 배경) */
+      .infobox { float: right; width: 350px; border: 2px solid var(--sk-red); margin-left: 25px; margin-bottom: 20px; background: white; }
+      .infobox-header { background-color: var(--sk-red); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 1.15rem; }
+      .infobox-img-area { padding: 15px; text-align: center; border-bottom: 1px solid var(--border-gray); }
+      .infobox-img-area img { max-width: 100%; height: auto; }
+      .infobox-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+      .infobox-table th { background-color: var(--sk-orange); color: white; width: 30%; border: 1px solid var(--border-gray); padding: 10px; text-align: center; font-weight: bold; }
+      .infobox-table td { border: 1px solid var(--border-gray); padding: 10px; background: #fff; word-break: keep-all; } /* 글자 예쁘게 떨어지도록 설정 */
+      /* 5. 목차 */
+      .toc { border: 1px solid var(--border-gray); background: #fff; display: inline-block; padding: 15px; margin: 20px 0; min-width: 320px; }
+      .toc-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; cursor: pointer; }
+      .toc-v { font-size: 0.85rem; color: #555; }
+      .toc ul { list-style: none; padding-left: 0; margin: 0; }
+      .toc li { margin-bottom: 6px; font-size: 0.95rem; }
+      .toc ul ul { padding-left: 20px; }
+      /* 6. 섹션 헤더 (모든 단계 하단 실선 + [편집] + 파란색 숫자) */
+      .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line-light); margin-top: 35px; padding-bottom: 8px; cursor: pointer; }
+      .section-title { font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; }
+      .section-title .num { color: var(--link-blue); margin-right: 8px; font-weight: bold; }
+      .v-icon { font-size: 0.9rem; color: #555; margin-right: 12px; transition: transform 0.2s; }
+      .collapsed .v-icon { transform: rotate(-90deg); }
+      .edit-link { font-size: 0.85rem; color: var(--link-blue); font-weight: normal; }
+      .toggle-content { display: block; margin-top: 15px; }
+      .toggle-content.hidden { display: none !important; }
+      /* 7. 각주 및 리스트 */
+      .footnote-popup { display: none; background: #fff; border: 1px solid var(--border-gray); padding: 10px; margin: 8px 0; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 3.5px solid var(--namu-teal); line-height: 1.5; }
+      .footnote-popup.active { display: block; }
+      sup { color: var(--link-blue); cursor: pointer; font-weight: bold; font-size: 0.8rem; margin-left: 2px; }
+      .wiki-list { list-style: none; padding-left: 10px; margin-top: 10px; }
+      .wiki-list li { position: relative; padding-left: 20px; margin-bottom: 12px; }
+      .wiki-list li::before { content: '•'; position: absolute; left: 0; font-size: 0.7rem; top: 5px; color: #777; }
+      .wiki-list ul { list-style: circle; padding-left: 20px; margin-top: 8px; }
+      .wiki-list ul li::before { display: none; }
+      .blue-text { color: var(--link-blue); cursor: pointer; }
+      .gray-box {
+      background: #f5f5f5;              /* 연한 회색 배경 */
+      border: 1px dashed #bbb;          /* 얇은 회색 점선 테두리 */
+      border-left: 5px solid #5cb85c;   /* 왼쪽만 두꺼운 초록색 실선 */
+      padding: 18px 20px;
+      margin: 15px 0;
+      /* 기존에 있던 border-radius(둥근 모서리)는 삭제해서 직각으로 만듦 */
+      }
+      .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+      .image-grid img { width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+    /* 나무위키 외부 링크 스타일 (두꺼운 초록색 + 아이콘) */
+a.namu-ext-link {
+    color: #008000 !important; /* 기본 파란색 설정을 무시하고 무조건 초록색 적용 */
+    font-weight: bold !important; /* 글씨 두껍게 */
+    text-decoration: none;
+}
+
+a.namu-ext-link:hover {
+    text-decoration: underline; /* 마우스 올렸을 때 밑줄 */
+}
+
+/* 텍스트 앞의 초록색 아이콘 박스 생성 */
+a.namu-ext-link::before {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background-color: #008000;
+    /* 흰색 링크 쇠사슬 모양 SVG 아이콘 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E");
+    background-size: 10px;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-right: 4px;
+    vertical-align: -1px;
+    border-radius: 1.5px;
+}
+</style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-left">
+        <div class="nav-brand">🌳 CE위키</div>
+        <div class="nav-menu">
+          <span>최근 변경</span>
+          <span>최근 토론</span>
+          <span>특수 기능</span>
+        </div>
+      </div>
+      <div class="search-container">
+        <input type="text" class="search-input" placeholder="여기에서 검색">
+        <span class="search-icon">🔍</span>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="doc-header">
+        <h1 class="doc-title">SKCE</h1>
+        <div class="header-btns">
+          <button class="btn-wiki" style="color: #f1c40f;">★</button>
+          <button class="btn-wiki">편집</button>
+          <button class="btn-wiki">토론</button>
+          <button class="btn-wiki">역사</button>
+        </div>
+      </div>
+      <!-- 이미지 완벽 반영: 대외활동 텍스트 없음 -->
+      <div class="category-box">
+        분류: <a href="#">SK Careers Editor</a> | <a href="#">SK 채용 전문 기자단</a> | <a href="#">대외활동</a>
+      </div>
+      <!-- 인포박스 -->
+      <div class="infobox">
+        <div class="infobox-header">SKCE</div>
+        <div class="infobox-img-area">
+          <img src="https://purple-hospital-f89.notion.site/image/attachment%3Ac41fabd8-cba6-4ab2-8f13-79d207eaebbc%3Aimage.png?table=block&id=3552cb88-64b0-8051-9b42-cfd6b59550cd&spaceId=7e1c2312-3111-4f97-a8c8-0839c88e8ff2&width=500&userId=&cache=v2" alt="SKCE 로고">
+          <div style="font-size: 0.8rem; color: #666; margin-top: 8px;">SKCE 공식 엠블럼</div>
+        </div>
+        <table class="infobox-table">
+          <tr>
+            <th>모집 대상</th>
+            <td>대학생이면 누구나!<sup onclick="toggleNote('n1')">[1]</sup>
+            <div id="n1" class="footnote-popup">[1] 활동 기간 중 대학생이면 정말 누구나 가능하다!</div>
+          </td>
+        </tr>
+        <tr>
+          <th>모집 분야</th>
+          <td>취재 기자 부문 | 영상 크리에이터 부문</td>
+        </tr>
+        <tr>
+          <th>모집 인원</th>
+          <td>00명<sup onclick="toggleNote('n2')">[2]</sup>
+          <div id="n2" class="footnote-popup">[2] 관계사나 기수마다 선발하는 인원이 다를 수 있다.</div>
+        </td>
+      </tr>
+      <tr>
+        <th>모집 절차</th>
+        <td>서류전형 > 면접전형 > 최종선발</td>
+      </tr>
+      <tr>
+        <th>지원 방법</th>
+        <td>모집페이지 내 온라인 지원<br>
+          <a class="blue-text" href="#">http://www.skce.co.kr/</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <p>SKCE는 <span class="blue-text">SK그룹 채용 소식 및 주요 관계사의 소식</span>을 전하는 기자단으로 SK그룹 내 다양한 관계사의 채용 정보와 인터뷰 등을 <span class="blue-text">기사</span>와 <span class="blue-text">영상 콘텐츠</span>
+  <sup onclick="toggleNote('n3')">[3]</sup>로 제작해 <span class="blue-text">SK Careers Journal, SK Careers 유튜브 채널</span>에 소개한다.
+  <div id="n3" class="footnote-popup">[3] 영상 크리에이터와 취재기자를 나눠서 선발한다.</div>
+</p>
+<!-- 목차 -->
+<div class="toc">
+  <div class="toc-header" onclick="toggleSec('toc-list', this)">목차 <span class="toc-v">v</span>
+</div>
+<ul id="toc-list">
+  <li>1. <a href="#s-1">SKCE란?</a>
+</li>
+<li>2. <a href="#s-2">활동 구조</a>
+</li>
+<li>3. <a href="#s-3">선발 과정</a>
+</li>
+<li>4. <a href="#s-4">활동 프로세스</a>
+</li>
+<li>5. <a href="#s-5">주요 활동</a>
+</li>
+<li>6. <a href="#s-6">SKCE 23기 활동 후기</a>
+</li>
+<li>7. <a href="#s-7">지원 팁</a>
+</li>
+<li>8. <a href="#s-8">기타</a>
+</li>
+</ul>
+</div>
+<!-- 1. SKCE란? -->
+<div id="s-1" class="section-header" onclick="toggleSec('c1', this)">
+  <div class="section-title">
+    <span class="v-icon">∨</span>
+    <span class="num">1.</span> SKCE란?</div>
+    <span class="edit-link">[편집]</span>
+  </div>
+  <div id="c1" class="toggle-content">
+    <div class="section-header" style="margin-top:10px;" onclick="toggleSec('c1-1', this)">
+      <div class="section-title" style="font-size:1.3rem;">
+        <span class="v-icon">∨</span>
+        <span class="num">1.1.</span> 정의</div>
+        <span class="edit-link">[편집]</span>
+      </div>
+      <div id="c1-1" class="toggle-content" style="padding-left:20px;">
+        <p>
+          <span class="blue-text">SK그룹</span> 채용 소식 및 주요 관계사의 소식을 전하는 SK 채용 전문 기자단이다. 정식 명칭은 SK Careers Editor, 줄여서 SKCE라고 부른다. 주로 SK그룹 내 다양한 관계사<sup onclick="toggleNote('n4')">[4]</sup>의 채용 정보와 <span class="blue-text">현직자</span> 인터뷰, 기업 문화 등을 콘텐츠로 제작하여 예비 지원자들에게 전달하는 역할을 수행한다.
+          <div id="n4" class="footnote-popup">[4] 선발하는 관계사는 그때그때 조금씩 다르다.</div>
+        </p>
+      </div>
+      <div class="section-header" onclick="toggleSec('c1-2', this)">
+        <div class="section-title" style="font-size:1.3rem;">
+          <span class="v-icon">∨</span>
+          <span class="num">1.2.</span> 활동 내용</div>
+          <span class="edit-link">[편집]</span>
+        </div>
+        <div id="c1-2" class="toggle-content" style="padding-left:20px;">
+          <ul class="wiki-list">
+            <li>SK그룹 채용 소식 취재 및 콘텐츠 작성<sup onclick="toggleNote('n5')">[5]</sup>
+            <div id="n5" class="footnote-popup">[5] 23기 기준 6개월의 활동기간 동안 총 5개의 콘텐츠를 제작할 예정이다.</div>
+          </li>
+          <li>월 <span class="blue-text">정기회의</span> 참석<sup onclick="toggleNote('n6')">[6]</sup>
+          <div id="n6" class="footnote-popup">[6] <span class="blue-text">시험기간</span>이 있는 달은 <span class="blue-text">비대면</span>으로 진행하기도 한다. CE들을 위해 물심양면으로 노력해주시는 <span class="blue-text">운영사무국...</span>
+        </div>
+      </li>
+      <li>각 관계사 <span class="blue-text">멘토</span>와의 만남</li>
+      <li>네트워킹 프로그램</li>
+    </ul>
+  </div>
+  <div class="section-header" onclick="toggleSec('c1-3', this)">
+    <div class="section-title" style="font-size:1.3rem;">
+      <span class="v-icon">∨</span>
+      <span class="num">1.3.</span> 활동 혜택</div>
+      <span class="edit-link">[편집]</span>
+    </div>
+    <div id="c1-3" class="toggle-content" style="padding-left:20px;">
+      <ul class="wiki-list">
+        <li>
+          <span class="blue-text" title="SKCT">활동 수료자에 한해 SK그룹 신입/인턴 채용 지원 시 첫 전형 면제</span>
+        </li>
+        <li>관계사 <span class="blue-text">멘토 매칭 및 멘토링</span>
+      </li>
+      <li>월 활동비 지급</li>
+      <li>
+        <span class="blue-text">SK그룹 내 관계사 임직원과의 만남</span>
+      </li>
+      <li>콘텐츠 특강 진행 등<sup onclick="toggleNote('n7')">[7]</sup>
+      <div id="n7" class="footnote-popup">[7] 기획 회의 시간에 특강을 진행한다.</div>
+    </li>
+  </ul>
+</div>
+</div>
+<!-- 2. 활동 구조 -->
+<div id="s-2" class="section-header" onclick="toggleSec('c2', this)">
+  <div class="section-title">
+    <span class="v-icon">∨</span>
+    <span class="num">2.</span> 활동 구조</div>
+    <span class="edit-link">[편집]</span>
+  </div>
+  <div id="c2" class="toggle-content">
+    <div class="section-header" onclick="toggleSec('c2-1', this)">
+      <div class="section-title" style="font-size:1.3rem;">
+        <span class="v-icon">∨</span>
+        <span class="num">2.1.</span> 취재기자</div>
+        <span class="edit-link">[편집]</span>
+      </div>
+      <div id="c2" class="toggle-content">
+        <div class="section-header" onclick="toggleSec('c2-1', this)">
+          <div class="section-title" style="font-size:1.3rem;">
+            <span class="v-icon">∨</span>
+            <span class="num">2.1.1.</span>역할</div>
+            <span class="edit-link">[편집]</span>
+          </div>
+          <div id="c2-1" class="toggle-content" style="padding-left:20px;">
+            SK그룹 채용 소식 및 주요 관계사의 소식이 담긴 <span class="blue-text">기사</span> 콘텐츠 제작. 콘텐츠 전문은 <span class="blue-text">SK 채용 공식블로그(SK Careers Journal)</span>에 업로드된다.</ul>
+          </div>
+          <div id="c2" class="toggle-content">
+            <div class="section-header" onclick="toggleSec('c2-1', this)">
+              <div class="section-title" style="font-size:1.3rem;">
+                <span class="v-icon">∨</span>
+                <span class="num">2.1.2.</span>필요 역량</div>
+                <span class="edit-link">[편집]</span>
+              </div>
+              <div id="c2-1" class="toggle-content" style="padding-left:20px;">
+                <ul class="wiki-list">
+                  <li>글쓰기 능력: 콘텐츠가 <span class="blue-text">블로그</span> 기사 형태이므로 글 쓰는 능력이 필수이다.</li>
+                  <li>구조화 역량: <span class="blue-text">현직자분들</span>과 <span class="blue-text">인터뷰</span>를 하게 되면 내용이 상당히 길게 나오는 경우가 많다. 이를 잘 간추리고, 구조화 하는 것이 <span class="blue-text">CE</span>의 역량.</li>
+                  <li>
+                    <span class="blue-text">커뮤니케이션 역량</span>: <span class="blue-text">현직자 인터뷰</span>가 콘텐츠의 주가 되기 때문이다.</li>
+                    <li>
+                      <span class="blue-text">디자인 시각화 역량</span>: 기사를 보면 파악할 수 있겠지만 <span class="blue-text">배너</span>나 <span class="blue-text">이미지</span> 같은 부분에서 약간의 디자인이 필요하다. <span class="blue-text">디자인 툴</span>
+                      <sup onclick="toggleNote('n8')">[8]</sup>을 아예 다루지 못한다면 활동에 어려움이 있을 수 있다.
+                      <div id="n8" class="footnote-popup">[8] 포토샵이나 피그마 같은 어려운 툴이 아니라 <span class="blue-text">망고보드나 미리캔버스</span> 정도만 다룰 수 있어도 지원할 수 있다.</div>
+                    </li>
+                    <li>책임감: 모든 <span class="blue-text">대외활동</span>이 그렇듯 책임감 있게 활동하는 것이 기본.</li>
+                  </ul>
+                </div>
+                <div class="section-header" onclick="toggleSec('c2-2', this)">
+                  <div class="section-title" style="font-size:1.3rem;">
+                    <span class="v-icon">∨</span>
+                    <span class="num">2.2.</span> 영상 크리에이터</div>
+                    <span class="edit-link">[편집]</span>
+                  </div>
+                  <div class="section-header" onclick="toggleSec('c2-2', this)">
+                    <div class="section-title" style="font-size:1.3rem;">
+                      <span class="v-icon">∨</span>
+                      <span class="num">2.2.1.</span> 역할</div>
+                      <span class="edit-link">[편집]</span>
+                    </div>
+                    <ul class="wiki-list">
+                      SK그룹 채용 소식 및 주요 관계사의 소식이 담긴 <span class="blue-text">영상</span> 콘텐츠 제작. full 영상은 <span class="blue-text">SK Careers 유튜브 채널</span>에 업로드된다.
+                    </div>
+                    <div class="section-header" onclick="toggleSec('c2-2', this)">
+                      <div class="section-title" style="font-size:1.3rem;">
+                        <span class="v-icon">∨</span>
+                        <span class="num">2.2.2.</span>필요 역량</div>
+                        <span class="edit-link">[편집]</span>
+                      </div>
+                      <div id="c2-2" class="toggle-content" style="padding-left:20px;">
+                      </ul>
+                      <ul class="wiki-list">
+                        <li>아이디어 기획 역량</li>
+                        <li>
+                          <span class="blue-text">촬영 진행 능력</span>: 촬영과 편집 전반에 <span class="blue-text">이해도</span>가 있는 사람이라면 더 유리하다.</li>
+                          <li>
+                            <span class="blue-text">영상 편집 역량</span>
+                          </li>
+                          <li>
+                            <span class="blue-text">커뮤니케이션 역량</span>
+                          </li>
+                          <li>
+                            <span class="blue-text">책임감</span>: 모든 대외활동이 그렇듯 책임감 있게 활동하는 것이 기본.</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <!-- 3. 선발 과정 -->
+                      <div id="s-3" class="section-header" onclick="toggleSec('c3', this)">
+                        <div class="section-title">
+                          <span class="v-icon">∨</span>
+                          <span class="num">3.</span> 선발 과정</div>
+                          <span class="edit-link">[편집]</span>
+                        </div>
+                        <div id="c3" class="toggle-content">
+                          <div class="section-header" onclick="toggleSec('c3-1', this)">
+                            <div class="section-title" style="font-size:1.3rem;">
+                              <span class="v-icon">∨</span>
+                              <span class="num">3.1.</span> 서류 전형</div>
+                              <span class="edit-link">[편집]</span>
+                            </div>
+                            <div id="c3" class="toggle-content">
+                              <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                <div class="section-title" style="font-size:1.3rem;">
+                                  <span class="v-icon">∨</span>
+                                  <span class="num">3.1.1.</span>희망 관계사</div>
+                                  <span class="edit-link">[편집]</span>
+                                </div>
+                                <div id="c3-1" class="toggle-content" style="padding-left:20px;">
+                                  <p>지원 시 먼저 희망 관계사를 선택해야 한다. 23기 기준으로 CE를 선발한 관계사는 다음과 같다.</p>
+                                  <div class="gray-box">
+                                    <b>SKCE 선발 관계사</b>
+                                    <br>
+                                    <br>
+                                    <b>[취재기자]</b>
+                                    <br>
+                                    SK(주) AX, SK텔레콤, SK하이닉스, SK E&S, SK네트웍스, SK에코플랜트, SK바이오팜, SK가스 & SK케미칼<br>
+                                    <br>
+                                    <b>[영상 크리에이터]</b>
+                                    <br>
+                                    SK(주) AX, SK텔레콤, SK하이닉스, <span class="blue-text">SK브로드밴드</span>
+                                  </div>
+                                  <p>
+                                    <span class="blue-text">취재기자</span>만 선발하는 관계사도 있고, <span class="blue-text">영상 크리에이터</span>만 선발하는 관계사도 있다.</p>
+                                    <p>이전 기수에는 희망 관계사를 <span class="blue-text">1,2지망</span>을 쓸 수 있었지만 23기 기준으로 희망 관계사는 한 가지만 쓸 수 있었다.</p>
+                                    <p>경쟁률에 따라 <span class="blue-text">서류 전형</span> 중 지원 관계사를 바꿀 생각이 있는지 묻는 <span class="blue-text">전화</span>가 걸려오기도 한다.<sup onclick="toggleNote('n9')">[9]</sup>
+                                    <div id="n9" class="footnote-popup">[9] 이렇게 전화가 온다면 서류는 합격한 것으로 봐도 된다. 물론 23기 기준이고 변동될 수 있다.</div>
+                                  </p>
+                                  <p>꼭 희망 관계사가 하는 일과 전공이 일치하지 않아도 합격에 큰 지장은 없다. <del style="color: #999;">SK에코플랜트 같은 경우 건축/건축공학 전공자를 제치고 비전공자가 취재기자로 선발됐다 카더라</del>
+                                </p>
+                                <p>
+                                  <span class="blue-text">무조건 경쟁률이 낮아보이는 관계사에 넣는다!</span> 하는 생각은 <span class="blue-text">비추</span>한다. 적어도 해당 기업의 <span class="blue-text">뉴스룸</span>이나 <span class="blue-text">재무보고서</span>에서 그 기업이 어떤 일을 하는지는 꼼꼼하게 찾아보고 지원하자.</p>
+                                </div>
+                                <div id="c3" class="toggle-content">
+                                  <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                    <div class="section-title" style="font-size:1.3rem;">
+                                      <span class="v-icon">∨</span>
+                                      <span class="num">3.1.2.</span>경험 사항</div>
+                                      <span class="edit-link">[편집]</span>
+                                    </div>
+                                    <div id="c3" class="toggle-content">
+                                      <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                        <div class="section-title" style="font-size:1.3rem;">
+                                          <span class="v-icon">∨</span>
+                                          <span class="num">3.1.2.1.</span>작성 사항</div>
+                                          <span class="edit-link">[편집]</span>
+                                        </div>
+                                        <div id="c3-1" class="toggle-content" style="padding-left:20px;">
+                                          각각의 <span class="blue-text">경험</span>은 총 5개씩만 작성할 수 있다.
+                                          <ul class="wiki-list">
+                                            <li>경험구분: 교내활동/대외활동/사회활동 등 <br>(예: 학생회, 홍보대사, 교내 근로 등 / 서포터즈, 기자단, 봉사단 / 아르바이트, 인턴 등)</li>
+                                            <li>활동 기간<br>: 활동을 진행한 기간을 작성한다. <br> 예) 00대학교 <span class="blue-text">이과대학 학생회</span> (2022.03.00 ~ 2023.12.31)</li>
+                                            <li>역할 및 활동 내용<br>: 너무 간략하게 적는 것보다는 활동으로 얻은 것이나 중요 내용을 <span class="blue-text">두괄식</span>으로 적고, 몇 줄 덧붙이는 것을 추천한다. 그런데 간단하게 적어서 합격한 CE도 많다.  <del style="color: #999;">자신이 했던 경험을 잘 설명할 수 있는 방식으로…</del>
+                                          </li>
+                                        </ul>
+                                      </div>
+                                      <div id="c3" class="toggle-content">
+                                        <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                          <div class="section-title" style="font-size:1.3rem;">
+                                            <span class="v-icon">∨</span>
+                                            <span class="num">3.1.2.2.</span>SKCE 23기 지원서</div>
+                                            <span class="edit-link">[편집]</span>
+                                          </div>
+                                          <div id="c3-1" class="toggle-content" style="padding-left:20px;">
+                                            아래는 실제 활동하고 있는 CE들이 적은 내용이다.
+                                            <div class="gray-box">
+                                              <b>김민서 CE</b>
+                                              <br>
+                                              - AI/IT 교육회사 인턴<br>
+                                              - 통계청 대외활동<br>
+                                              - 학과 수업<br>
+                                              - 학과 디자인 동아리<br>
+                                              - 단과대 학생회<br>
+                                            </div>
+                                            <div class="gray-box">
+                                              <b>차승민 CE</b>
+                                              <br>
+                                              - 교내 방송국 PD<br>
+                                              - 학교 홍보대사 미디어팀<br>
+                                              - 신문사 대외활동<br>
+                                              - 언론사 인턴 (콘텐츠제작)<br>
+                                              - 개발 동아리 프론트엔드 경험  </div>
+                                            </div>
+                                            <div id="c3" class="toggle-content">
+                                              <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                                <div class="section-title" style="font-size:1.3rem;">
+                                                  <span class="v-icon">∨</span>
+                                                  <span class="num">3.1.2.3.</span>작성 포인트</div>
+                                                  <span class="edit-link">[편집]</span>
+                                                </div>
+                                                <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                </ul>
+                                                <ul class="wiki-list">
+                                                  <li>
+                                                    <span class="blue-text">소제목 활용</span>: 기업 공채와 마찬가지로 SKCE도 경쟁률이 꽤 높은 활동이기 때문에 담당자분들은 수많은 지원서를 보게 된다. 세부 내용을 읽지 않아도 핵심 내용이 눈에 들어올 수 있도록 적는 것이 유리하다.</li>
+                                                    <li>
+                                                      <span class="blue-text">관련 역량 드러내기</span>: 꼭 대기업 활동이거나 결과가 화려한 활동만 좋은 것은 아니다. 단기 아르바이트나 교내 소규모 프로젝트이더라도 CE의 역량과 연결된다면 꼭 적는 것을 추천한다.</li>
+                                                    </ul>
+                                                  </li>
+                                                </ul>
+                                              </div>
+                                              <div id="c3" class="toggle-content">
+                                                <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                                  <div class="section-title" style="font-size:1.3rem;">
+                                                    <span class="v-icon">∨</span>
+                                                    <span class="num">3.1.3.</span>수상 내역</div>
+                                                    <span class="edit-link">[편집]</span>
+                                                  </div>
+                                                  <ul class="wiki-list">
+                                                    <li>수상 내역 갯수: 최대 5개 작성이 가능하다.<del style="color: #999;">정말 많은 것을 적을 수 있다.</del>
+                                                  </li>
+                                                  <li>
+                                                    <span class="blue-text">특별한 수상 내역이 꼭 있어야 한다?</span>
+                                                    <del style="color: #999;">(아님)</del>
+                                                  </li>
+                                                </ul>
+                                              </div>
+                                              <div id="c3" class="toggle-content">
+                                                <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                                  <div class="section-title" style="font-size:1.3rem;">
+                                                    <span class="v-icon">∨</span>
+                                                    <span class="num">3.1.4.</span>자기소개</div>
+                                                    <span class="edit-link">[편집]</span>
+                                                  </div>
+                                                  <div id="c3-1" class="toggle-content" style="padding-left:20px;">
+                                                    <p>이 경우도 소제목을 적극적으로 활용하고, 꼭 두괄식으로 작성하자.</p>
+                                                    <ul class="wiki-list">
+                                                      <li>
+                                                        <span class="blue-text">지원동기</span>
+                                                        <br>: SKCE 자체의 지원동기여도 좋고, 관계사에 집중한 지원동기여도 좋다. 하지만 관계사 직원의 역량보다는 <span class="blue-text">CE의 역할에</span> 집중해서 작성하는 것을 추천한다.</li>
+                                                        <li>이전 활동 기반 자신이 발휘할 수 있는 <span class="blue-text">역량</span>
+                                                        <br>: <span class="blue-text">경험 사항</span>에 적었던 내용 중 가장 어필하고 싶은 내용을 가져와서 쓰면 좋다.</li>
+                                                        <li>1지망 관계사 SK채용 관련 <span class="blue-text">콘텐츠 기획안</span> 작성<br>: 관계사 <span class="blue-text">뉴스룸</span>이나 <span class="blue-text">보도자료</span>를 보고 관계사를 파악한 후, <span class="blue-text">SK Careers Journal, SK Careers</span> 유튜브를 보고 최근에 작성되지 않았던 주제로 작성하는 것을 추천한다. <del style="color: #999;">B2B 기업의 경우 자료를 찾기 쉽지 않을 수도 있다.. 재무보고서나 기업 홈페이지도 샅샅이 뒤져보자.</del>
+                                                      </li>
+                                                      <li>아쉬운 콘텐츠 선정 후 보완 전략<br>: 이전 기수들이 제작한 콘텐츠 중 <span class="blue-text">아쉬운 콘텐츠</span>와 보완 전략을 작성하는 문항이다.</li>
+                                                    </ul>
+                                                    <div id="c3" class="toggle-content">
+                                                      <div class="section-header" onclick="toggleSec('c3-1', this)">
+                                                        <div class="section-title" style="font-size:1.3rem;">
+                                                          <span class="v-icon">∨</span>
+                                                          <span class="num">3.1.5.</span>포트폴리오</div>
+                                                          <span class="edit-link">[편집]</span>
+                                                        </div>
+                                                        <div id="c3-1" class="toggle-content" style="padding-left:20px;">
+                                                          <p>실제 CE들이 냈던 포트폴리오이다. (SK 컬러 적극 활용)</p><a href="https://organic-pressure-640.notion.site/_-CE-355777a1c6d1809fb157eef5b5858c65" target="_blank" class="namu-ext-link">진예원 CE 포트폴리오 크게 보기</a>
+
+                                                          <div class="image-grid">
+                                                            <img src=https://organic-pressure-640.notion.site/image/attachment%3Ad7d2602b-7cf1-41d5-9079-4eca4515aec6%3ASKCE_23%EA%B8%B0_%EC%A7%80%EC%9B%90%EC%A7%84%EC%98%88%EC%9B%90_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4_page-0001.jpg?table=block&id=337777a1-c6d1-80c1-871f-e860d4042310&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2><img src=https://organic-pressure-640.notion.site/image/attachment%3Aeb989b84-571e-4300-b1b9-8f41c4a792f7%3ASKCE_23%EA%B8%B0_%EC%A7%80%EC%9B%90%EC%A7%84%EC%98%88%EC%9B%90_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4_page-0005.jpg?table=block&id=337777a1-c6d1-8080-9075-cccf96b37cb9&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2>
+                                                            <img src=https://organic-pressure-640.notion.site/image/attachment%3A8be35ab7-0550-4c24-b902-47f5ee054242%3ASKCE_23%EA%B8%B0_%EC%A7%80%EC%9B%90%EC%A7%84%EC%98%88%EC%9B%90_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4_page-0003.jpg?table=block&id=337777a1-c6d1-8066-9ac6-c2d397341262&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2><img src=https://organic-pressure-640.notion.site/image/attachment%3A8be35ab7-0550-4c24-b902-47f5ee054242%3ASKCE_23%EA%B8%B0_%EC%A7%80%EC%9B%90%EC%A7%84%EC%98%88%EC%9B%90_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4_page-0003.jpg?table=block&id=337777a1-c6d1-8066-9ac6-c2d397341262&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2>
+                                                          </div>
+<a href="https://organic-pressure-640.notion.site/_-CE-355777a1c6d180d29035c4c8b7aaaaba" target="_blank" class="namu-ext-link">차승민 CE 포트폴리오 크게 보기</a>
+<div class="image-grid">
+ <img src=https://organic-pressure-640.notion.site/image/attachment%3Af32d4b95-81e1-4390-9831-22cc5798e4ae%3AScreenshot_2026-04-28_at_4.10.30_PM.png?table=block&id=350777a1-c6d1-80ef-9fe5-f2830af86e82&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2> <img src=https://organic-pressure-640.notion.site/image/attachment%3A656d0cbf-4124-47d1-be3f-a2aa6b0b59ee%3AScreenshot_2026-04-28_at_4.11.49_PM.png?table=block&id=350777a1-c6d1-8027-b3ef-efd0598e5b15&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2><img src=https://organic-pressure-640.notion.site/image/attachment%3Afccb4597-4d45-49b1-a552-2205cc9d4a4c%3AScreenshot_2026-04-28_at_4.11.56_PM.png?table=block&id=350777a1-c6d1-80f7-befb-ec969af445bc&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2><img src=https://organic-pressure-640.notion.site/image/attachment%3A0327de2a-bb87-44f0-97ca-c0165b9e0d84%3AScreenshot_2026-04-28_at_4.11.25_PM.png?table=block&id=350777a1-c6d1-802b-93ed-de531555ebf3&spaceId=2e604cb3-c408-46b6-9950-69a5363db05e&width=1410&userId=&cache=v2></div>
+
+                                                        </div>
+                                                        <div class="section-header" onclick="toggleSec('c3-2', this)">
+                                                          <div class="section-title" style="font-size:1.3rem;">
+                                                            <span class="v-icon">∨</span>
+                                                            <span class="num">3.2.</span> 면접 전형</div>
+                                                            <span class="edit-link">[편집]</span>
+                                                          </div>
+                                                          <div class="section-header" onclick="toggleSec('c3-2', this)">
+                                                            <div class="section-title" style="font-size:1.3rem;">
+                                                              <span class="v-icon">∨</span>
+                                                              <span class="num">3.2.1.</span>사전 미션</div>
+                                                              <span class="edit-link">[편집]</span>
+                                                            </div>
+                                                            <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                              <ul class="wiki-list">
+                                                                <li>1번 주제) 지원한 관계사와 연관된 콘텐츠를 기획 또는 제작하여 소개해주세요. <br>- AI툴(툴 종류 제한 없음) 활용 필수</li>
+                                                                <li>2번 주제) 기존 콘텐츠 활동 중 AI툴(이미지, 영상, 숏폼, BGM, 삽화 등 형태 제한없음)을 활용하여 제작한 콘텐츠 경험을 소개해주세요.</li>
+                                                                <li>AI 툴 활용: 기본적인 AI만 사용해도 괜찮다?<sup onclick="toggleNote('n10')">[10]</sup>
+                                                                <div id="n10" class="footnote-popup">[10] 예를 들면 Chat GPT나 제미나이같은 우리에게 친근한 AI툴만 사용하는 경우</div>
+                                                              </li>
+                                                              <li>SKCE의 사전 미션</li>
+                                                         
+<a href="https://drive.google.com/file/d/12qJMCE_ufkfrP0l-u50MyPPoPmpgGVUr/view?usp=sharing" target="_blank" class="namu-ext-link">진예원 CE 사전미션</a> <br>
+<a href="https://drive.google.com/file/d/1JvGmCJ5tJPsTOkysT_PPp1X4v_KwjOF_/view?usp=sharing" target="_blank" class="namu-ext-link">차승민 CE 사전미션</a>
+                                                            </ul>
+                                                          </div>
+                                                          <div class="section-header" onclick="toggleSec('c3-2', this)">
+                                                            <div class="section-title" style="font-size:1.3rem;">
+                                                              <span class="v-icon">∨</span>
+                                                              <span class="num">3.2.2.</span>관계사 전환 가능성</div>
+                                                              <span class="edit-link">[편집]</span>
+                                                            </div>
+                                                            <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                              <p>앞서 이야기한 것처럼 <span class="blue-text">서류 전형</span> 시에 지원 관계사가 <span class="blue-text">전환</span>될 수도 있다. 관계사 전환 소식을 들으면 정말 걱정될 것이다. <del style="color: #999;">나는 이 관계사를 잘 모르는데, 남들은 진심일까봐 걱정...</del> 하지만 전환되었다고 해서 합격 가능성이 없는 것은 절대 아니다.</p>
+                                                            </div>
+                                                            <div class="section-header" onclick="toggleSec('c3-2', this)">
+                                                              <div class="section-title" style="font-size:1.3rem;">
+                                                                <span class="v-icon">∨</span>
+                                                                <span class="num">3.2.3.</span>면접 준비</div>
+                                                                <span class="edit-link">[편집]</span>
+                                                              </div>
+                                                              <ul class="wiki-list">
+                                                                <li>1분 자기소개 준비<br>: 자기소개에서 소개한 <span class="blue-text">핵심 키워드</span>를 면접 전반에서 끌고가면 강한 인상을 줄 수 있다.</li>
+                                                                <li>
+                                                                  <span class="blue-text">관계사 공부</span>
+                                                                  <br>: 채용 블로그, 뉴스룸 참고. 관계사 채용 전형, 주요 서비스, ESG 경영보고서도 필요에 따라 확인하면 좋다.</li>
+                                                                </ul>
+                                                              </div>
+                                                              <div class="section-header" onclick="toggleSec('c3-2', this)">
+                                                                <div class="section-title" style="font-size:1.3rem;">
+                                                                  <span class="v-icon">∨</span>
+                                                                  <span class="num">3.2.4.</span>면접 진행</div>
+                                                                  <span class="edit-link">[편집]</span>
+                                                                </div>
+                                                                <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                  <p>면접에는 NHR 담당자님 한 분, 지원 관계사 HR담당자님 한 분이 들어오신다.<sup onclick="toggleNote('n11')">[11]</sup>
+                                                                  <div id="n11" class="footnote-popup">[11] 23기 기준이다.</div>
+                                                                </p>
+                                                                <p>23기 기준으로는 관계사 별 3-4명의 지원자가 면접을 진행했고, <span class="blue-text">소회의실</span> 같은 작은 방에서 면접이 진행됐다.<del style="color: #999;">큰 강당 같은 면접장을 생각했다면 면접관분들과 너무 가까워서 놀랄 수도..</del>
+                                                              </p>
+                                                              <ul class="wiki-list">
+                                                                <li>사전 미션 발표: <span class="blue-text">발표 꿀팁</span>
+                                                                <br>- 제한 시간이 안내되어 있지만(3분), 발표 시간을 초과한다고 발표를 중단하시지는 않았다. <b>그러나 시간 엄수는 중요하다.</b> 발표 시간이 너무 길어지면 메인 포인트가 어필이 안 될 수도 있고, 개인 질문을 받을 수 있는 시간이 굉장히 줄어든다.
+                                                                <del style="color: #999;">대본을 참고해서 발표해도 된다?</del>
+                                                                <li>지원서 기반/일반 면접: <span class="blue-text">SKCE 23기가 받은 질문</span>
+                                                                <ul>
+                                                                  <li>마감기한이나 시간 관리 어떻게 하는가?</li>
+                                                                  <li>평소 피드백을 어떤 방식으로 주고받는가?</li>
+                                                                  <li>요즘 취업 준비생들의 가장 큰 관심사는 무엇인가?</li>
+                                                                  <li>이 관계사에 지원한 이유가 무엇인가?</li>
+                                                                  <li>미래에 하고 싶은 일</li>
+                                                                  <li>다른 지원자에 비해서 나의 강점</li>
+                                                                  <li>인터뷰이(현직자)분들이 매우 바쁘신데 시간 조절 어떻게 할 것인지</li>
+                                                                  <li>콘텐츠 제작에 얼마나 걸리는지</li>
+                                                                </ul>
+                                                                <li>
+                                                                  <span class="blue-text">면접 꿀팁</span>
+                                                                  <br> 너무 빠르게 답하려고 하지 말고, 천천히 답변하자. 빠르게 답변하려다 보면 긴장한 것이 티가 나기도 하고 나중에는 동문서답이 될 수도 있다. 질문을 받으면 1초 정도 생각하고, 결론을 두괄식으로 말한 뒤 덧붙이는 식으로 답변하면 좋은 답변이 가능하다.<br>
+                                                                  <del style="color: #999;">동문서답만 안 해도 반은 간다...</del>
+                                                                </li>
+                                                                <li>면접에서 우수한 역량을 보여주면 <span class="blue-text">면접 우수자</span>로 선정될 수 있다.
+                                                                </ul>
+                                                              </div>
+                                                            </div>
+                                                            <!-- 4. 활동 프로세스 -->
+                                                            <div id="s-4" class="section-header" onclick="toggleSec('c4', this)">
+                                                              <div class="section-title">
+                                                                <span class="v-icon">∨</span>
+                                                                <span class="num">4.</span> 활동 프로세스</div>
+                                                                <span class="edit-link">[편집]</span>
+                                                              </div>
+                                                              <div id="c4" class="toggle-content">
+                                                                <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                  <div class="section-title" style="font-size:1.3rem;">
+                                                                    <span class="v-icon">∨</span>
+                                                                    <span class="num">4.1.</span>콘텐츠 제작 과정</div>
+                                                                    <span class="edit-link">[편집]</span>
+                                                                  </div>
+                                                                  <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                    기획안 작성 - 인터뷰 및 취재 진행 - 콘텐츠 제작
+                                                                    (<span class="blue-text">마감기한 엄수</span>)</li>
+                                                                  </div>
+                                                                  <div id="c4" class="toggle-content">
+                                                                    <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                      <div class="section-title" style="font-size:1.3rem;">
+                                                                        <span class="v-icon">∨</span>
+                                                                        <span class="num">4.2.</span>멘토 피드백 시스템</div>
+                                                                        <span class="edit-link">[편집]</span>
+                                                                      </div>
+                                                                      <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                        업로드 전 <span class="blue-text">멘토</span>의 피드백과 컨펌을 받아야 한다.<sup onclick="toggleNote('n12')">[12]</sup> 피드백 과정에서 관계사에 대해 몰랐던 사실들을 많이 알게 되기도 하고, <span class="blue-text">좋은 콘텐츠</span>는 어떤 콘텐츠인지 배울 수 있다.
+                                                                        <div id="n12" class="footnote-popup">[12] 모든 콘텐츠는 SK 공식 사이트/유튜브에 업로드 되는 것이므로</div>
+                                                                      </li>
+                                                                    </div>
+                                                                    <div id="c4" class="toggle-content">
+                                                                      <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                        <div class="section-title" style="font-size:1.3rem;">
+                                                                          <span class="v-icon">∨</span>
+                                                                          <span class="num">4.3.</span>발행 구조</div>
+                                                                          <span class="edit-link">[편집]</span>
+                                                                        </div>
+                                                                        <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                          멘토 혹은 필요에 따라 멘토+인터뷰이 콘텐츠 컨펌이 완료되면 CE가 컨펌 완료된 콘텐츠를 카페에 업로드한다.
+                                                                        </ul>
+                                                                      </div>
+                                                                      <!-- 5. 주요 활동 -->
+                                                                      <div id="s-5" class="section-header" onclick="toggleSec('c5', this)">
+                                                                        <div class="section-title">
+                                                                          <span class="v-icon">∨</span>
+                                                                          <span class="num">5.</span> 주요 활동</div>
+                                                                          <span class="edit-link">[편집]</span>
+                                                                        </div>
+                                                                        <div id="c4" class="toggle-content">
+                                                                          <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                            <div class="section-title" style="font-size:1.3rem;">
+                                                                              <span class="v-icon">∨</span>
+                                                                              <span class="num">5.1.</span>현직자 인터뷰</div>
+                                                                              <span class="edit-link">[편집]</span>
+                                                                            </div>
+                                                                            <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                              <span class="blue-text">현직자 인터뷰</span>: SKCE 활동의 핵심 요소 중 하나로, 기획한 콘텐츠 주제에 맞는 현직자를 직접 인터뷰할 수 있는 기회가 제공된다.<sup onclick="toggleNote('n13')">[13]</sup> 일반적으로 CE는 먼저 <span class="blue-text">콘텐츠 기획안</span>과 인터뷰 질문지를 작성하여 멘토에게 전달하며, 이후 멘토가 해당 기획과 적합한 현직자를 섭외하는 방식으로 진행된다.<sup onclick="toggleNote('n14')">[14]</sup>
+                                                                              <div id="n13" class="footnote-popup">[13] 인터뷰 때 드릴 수 있도록 CE용 명함도 제작해주신다. <del style="color: #999;">굿굿</del>
+                                                                            </div>
+                                                                            <div id="n14" class="footnote-popup">[14] <del style="color: #999;">반대로 제출한 여러 기획안 중 현직자 인터뷰가 가능한 주제로 콘텐츠 제작이 진행되는 경우도...</del>
+                                                                          </div>
+                                                                        </div>
+                                                                        <div id="c4" class="toggle-content">
+                                                                          <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                            <div class="section-title" style="font-size:1.3rem;">
+                                                                              <span class="v-icon">∨</span>
+                                                                              <span class="num">5.2.</span>기업/직무 콘텐츠 제작</div>
+                                                                              <span class="edit-link">[편집]</span>
+                                                                            </div>
+                                                                            <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                              매월 기업 또는 직무와 관련된 콘텐츠를 기획 및 제작한다. 기업 및 직무 콘텐츠 제작이 어려운 경우, 최대 2회까지 <span class="blue-text">트렌드 콘텐츠</span>로 전환이 가능하다.
+                                                                            </div>
+                                                                            <div id="c4" class="toggle-content">
+                                                                              <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                <div class="section-title" style="font-size:1.3rem;">
+                                                                                  <span class="v-icon">∨</span>
+                                                                                  <span class="num">5.3.</span>팀/개인 활동방식</div>
+                                                                                  <span class="edit-link">[편집]</span>
+                                                                                </div>
+                                                                                <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                  기본적으로 개인 단위로 콘텐츠 기획 및 제작이 이루어진다. 다만, 대규모 팀 프로젝트가 별도로 존재한다. 이는 일종의 <span class="blue-text">졸업작품</span> 형태로, SKCE 공식 홈페이지 및 유튜브 채널에 게시될 홍보 영상 및 정보성 콘텐츠를 팀 단위로 제작하는 활동이다.<del style="color: #999;"> SKCE 유튜브에 올라가있는 바로 그거다.</del>
+                                                                                  <ul class="wiki-list">
+                                                                                    <li>
+                                                                                      <span class="blue-text">네트워킹 프로그램</span>: CE들 간 교류를 위해 네트워킹 프로그램이 운영된다.</li>
+                                                                                    </ul>
+                                                                                  </li>
+                                                                                </ul>
+                                                                              </div>
+                                                                              <!-- 6. SKCE 23기 활동 후기 -->
+                                                                              <div id="s-6" class="section-header" onclick="toggleSec('c6', this)">
+                                                                                <div class="section-title">
+                                                                                  <span class="v-icon">∨</span>
+                                                                                  <span class="num">6.</span> SKCE 23기 활동 후기</div>
+                                                                                  <span class="edit-link">[편집]</span>
+                                                                                </div>
+                                                                              </div>
+                                                                              <div id="c4" class="toggle-content">
+                                                                                <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                  <div class="section-title" style="font-size:1.3rem;">
+                                                                                    <span class="v-icon">∨</span>
+                                                                                    <span class="num">6.1.</span>학교 병행 난이도</div>
+                                                                                    <span class="edit-link">[편집]</span>
+                                                                                  </div>
+                                                                                  <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                    취재기자의 경우, 콘텐츠 기획안이 컨펌된 이후 일정을 체계적으로 관리한다면 학업과 병행하는 데 큰 어려움은 없는 편이다.<sup onclick="toggleNote('n15')">[15]</sup>
+                                                                                    <div id="n15" class="footnote-popup">[15] <del style="color: #999;">CE 활동하며 최대 몇 학점까지 가능할까?</del>
+                                                                                  </div>
+                                                                                </li>
+                                                                              </div>
+                                                                              <div id="c4" class="toggle-content">
+                                                                                <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                  <div class="section-title" style="font-size:1.3rem;">
+                                                                                    <span class="v-icon">∨</span>
+                                                                                    <span class="num">6.2.</span>가장 인상 깊었던 인터뷰나 콘텐츠</div>
+                                                                                    <span class="edit-link">[편집]</span>
+                                                                                  </div>
+                                                                                  <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                  </div>
+                                                                                  <div id="c4" class="toggle-content">
+                                                                                    <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                      <div class="section-title" style="font-size:1.3rem;">
+                                                                                        <span class="v-icon">∨</span>
+                                                                                        <span class="num">6.3.</span>얻어가는 점</div>
+                                                                                        <span class="edit-link">[편집]</span>
+                                                                                      </div>
+                                                                                      <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                        실무적인 <span class="blue-text">소통 능력</span>을 기를 수 있고 무엇보다 하나의 기업을 주제로 <span class="blue-text">기획서</span>를 작성하고 컨펌을 받는 과정 자체가 실제 실무와 유사한 경험으로 작용한다.</li>
+                                                                                      </ul>
+                                                                                    </div>
+                                                                                    <!-- 7. 지원 팁 -->
+                                                                                    <div id="s-7" class="section-header" onclick="toggleSec('c7', this)">
+                                                                                      <div class="section-title">
+                                                                                        <span class="v-icon">∨</span>
+                                                                                        <span class="num">7.</span> 지원 팁</div>
+                                                                                        <span class="edit-link">[편집]</span>
+                                                                                      </div>
+                                                                                      <div id="c7" class="toggle-content">
+                                                                                      </div>
+                                                                                      <div id="c4" class="toggle-content">
+                                                                                        <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                          <div class="section-title" style="font-size:1.3rem;">
+                                                                                            <span class="v-icon">∨</span>
+                                                                                            <span class="num">7.1.</span>합격 포인트</div>
+                                                                                            <span class="edit-link">[편집]</span>
+                                                                                          </div>
+                                                                                          <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                            특정 분야에 대한 지식을 강조하는 것보다, 해당 내용을 비전공자도 이해할 수 있도록 쉽고 명확하게 전달하는 능력이 중요하게 작용한다. 즉, <span class="blue-text">전문적인 내용</span>을 얼마나 효과적으로 풀어낼 수 있는지가 핵심 평가 요소로 볼 수 있다.</li>
+                                                                                          </ul>
+                                                                                        </div>
+                                                                                        <!-- 8. 기타 -->
+                                                                                        <div id="s-8" class="section-header" onclick="toggleSec('c8', this)">
+                                                                                          <div class="section-title">
+                                                                                            <span class="v-icon">∨</span>
+                                                                                            <span class="num">8.</span> 기타</div>
+                                                                                            <span class="edit-link">[편집]</span>
+                                                                                          </div>
+                                                                                          <div id="c8" class="toggle-content">
+                                                                                          </div>
+                                                                                          <div id="c4" class="toggle-content">
+                                                                                            <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                              <div class="section-title" style="font-size:1.3rem;">
+                                                                                                <span class="v-icon">∨</span>
+                                                                                                <span class="num">8.1.</span>활동 꿀팁</div>
+                                                                                                <span class="edit-link">[편집]</span>
+                                                                                              </div>
+                                                                                              <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                                초기 기획안을 최대한 구체적으로 작성하는 것이 좋다.<sup onclick="toggleNote('n16')">[16]</sup>
+                                                                                                <div id="n16" class="footnote-popup">[16] 수료발대식날에 멘토님, 선배 기수 CE와 함께 논의해서 마스터플랜이라는 것을 작성하는데, 이때 주제가 다 논의되면 초기 기획안을 쓸 시간이 늘어난다.</ul>
+                                                                                              </div>
+                                                                                            </div>
+                                                                                            <div id="c4" class="toggle-content">
+                                                                                              <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                                <div class="section-title" style="font-size:1.3rem;">
+                                                                                                  <span class="v-icon">∨</span>
+                                                                                                  <span class="num">8.2.</span>주의사항</div>
+                                                                                                  <span class="edit-link">[편집]</span>
+                                                                                                </div>
+                                                                                                <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                                  멘토와의 <span class="blue-text">커뮤니케이션</span>이 활동 전반에 큰 영향을 미치므로, 지속적으로 연락을 유지하는 것이 중요하다. 일정 관리와 커뮤니케이션을 스스로 주도적으로 수행해야 한다.</li>
+                                                                                                </div>
+                                                                                                <div id="c4" class="toggle-content">
+                                                                                                  <div class="section-header" onclick="toggleSec('c4-1', this)">
+                                                                                                    <div class="section-title" style="font-size:1.3rem;">
+                                                                                                      <span class="v-icon">∨</span>
+                                                                                                      <span class="num">8.3.</span>한줄정리</div>
+                                                                                                      <span class="edit-link">[편집]</span>
+                                                                                                    </div>
+                                                                                                    <div id="c3-2" class="toggle-content" style="padding-left:20px;">
+                                                                                                      콘텐츠 기획부터 제작, 그리고 실무 기반 경험까지 모두 포함된 종합형 <span class="blue-text">대외활동</span>으로 평가된다.
+                                                                                                    </ul>
+                                                                                                  </div>
+                                                                                                </div>
+                                                                                                <!-- container 끝 -->
+                                                                                                <script>
+                                                                                                  function toggleSec(id, header) {
+                                                                                                  const target = document.getElementById(id);
+                                                                                                  const isCollapsed = target.classList.toggle('hidden');
+                                                                                                  header.classList.toggle('collapsed', isCollapsed);
+                                                                                                  }
+                                                                                                  function toggleNote(id) {
+                                                                                                  event.stopPropagation();
+                                                                                                  const note = document.getElementById(id);
+                                                                                                  // 팝업 열기 전 다른 팝업 닫기
+                                                                                                  document.querySelectorAll('.footnote-popup').forEach(p => {
+                                                                                                  if(p.id !== id) p.classList.remove('active');
+                                                                                                  });
+                                                                                                  note.classList.toggle('active');
+                                                                                                  }
+                                                                                                  // 문서 클릭 시 팝업 닫기
+                                                                                                  document.addEventListener('click', (e) => {
+                                                                                                  if (!e.target.closest('sup') && !e.target.closest('.footnote-popup')) {
+                                                                                                  document.querySelectorAll('.footnote-popup').forEach(p => p.classList.remove('active'));
+                                                                                                  }
+                                                                                                  });
+                                                                                                </script>
+                                                                                              </body>
+                                                                                            </html>
